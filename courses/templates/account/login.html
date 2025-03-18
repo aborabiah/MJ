@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% load i18n %}
+{% load account socialaccount %}
+
+{% block title %}
+Sign In
+{% endblock title %}
+
+{% block content %}
+<div class="album py-5 bg-light">
+    {% include 'partials/_messages.html' %}
+    <div class="container">
+        <form class="form-signin" method="POST" action="{% url 'account_login' %}">
+            {% csrf_token %}
+            
+            <h1 class="h3 mb-3 font-weight-normal text-center">Log in to your Account!</h1>
+            <hr>
+
+            <!-- Add this section for form-wide errors -->
+            {% if form.errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    Invalid username/password. Please try again.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+
+            <!-- Username/Email Field -->
+            <div class="form-group mb-3">
+                <label for="id_login">Username or Email</label>
+                <input type="text" 
+                       name="login" 
+                       id="id_login" 
+                       class="form-control {% if form.login.errors %}is-invalid{% endif %}" 
+                       placeholder="Enter your username or email" 
+                       autocomplete="email" 
+                       required 
+                       autofocus>
+                {% if form.login.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.login.errors|striptags }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group mb-3">
+                <label for="id_password">Password</label>
+                <input type="password" 
+                       name="password" 
+                       id="id_password" 
+                       class="form-control {% if form.password.errors %}is-invalid{% endif %}" 
+                       placeholder="Enter your password" 
+                       autocomplete="current-password" 
+                       required>
+                {% if form.password.errors %}
+                    <div class="invalid-feedback">
+                        {{ form.password.errors|striptags }}
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Log in</button>
+
+            <p class="mt-5 mb-3 text-muted text-center">or <a href="{% url 'account_reset_password' %}">Forgot Password?</a></p>
+            <p class="mb-3 text-muted text-center">Don't have an account? <a href="{% url 'account_signup' %}"><strong>Sign up</strong></a></p>
+        </form>
+    </div>
+</div>
+{% endblock %}

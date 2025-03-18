@@ -1,0 +1,197 @@
+<!-- Optimized Sidebar with Better Spacing -->
+<!-- Toggle Button - Always Visible -->
+<button id="sidebarToggle" class="btn btn-sm btn-primary position-fixed shadow-sm" 
+        style="top: 70px; left: 0; z-index: 1100; width: 32px; height: 32px; border-radius: 0 4px 4px 0; padding: 0; display: flex; align-items: center; justify-content: center;">
+  <i id="toggleIcon" class="fas fa-bars fa-sm"></i>
+</button>
+
+<!-- Sidebar Container -->
+<div id="sidebar" class="position-fixed bg-light border-end shadow" 
+     style="top: 56px; left: -280px; width: 280px; height: calc(100vh - 56px); overflow-y: auto; transition: left 0.3s ease; z-index: 1050;">
+  
+  <!-- Sidebar Header - Fixed with proper spacing -->
+  <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-light" 
+       style="position: sticky; top: 0; z-index: 1051;">
+    <h6 class="mb-0 fw-bold">Course Content</h6>
+  </div>
+  
+  <!-- Content Area - With proper spacing and padding -->
+  <div class="pt-2">
+    <ul class="nav flex-column px-2">
+      {% for lecture in lectures %}
+        <li class="nav-item mb-1">
+          <a class="nav-link py-2 px-3 {% if lecture.id == lecture_selected.id %}active bg-primary text-white rounded{% endif %}" 
+             href="{% url 'lecture-selected' course.course_slug lecture.lecture_slug %}">
+            <i class="fas fa-play-circle me-2"></i>
+            <span style="font-size: 0.95rem;">{{ lecture.lecture_title }}</span>
+          </a>
+        </li>
+      {% endfor %}
+      
+      <!-- Rate This Course Button -->
+      <li class="nav-item mt-3 px-1">
+        <a class="nav-link py-2 d-flex align-items-center" 
+           href="#" 
+           data-bs-toggle="modal" 
+           data-bs-target="#rateCourseModal">
+          <i class="fas fa-star me-2"></i>
+          Rate This Course
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Dark Overlay (Mobile Only) -->
+<div id="sidebarOverlay" class="position-fixed top-0 start-0 w-100 h-100 bg-dark" 
+     style="z-index: 1040; opacity: 0; visibility: hidden; transition: opacity 0.3s; pointer-events: none;"></div>
+
+<!-- Rate Course Modal -->
+<div class="modal fade" id="rateCourseModal" tabindex="-1" aria-labelledby="rateCourseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="rateCourseModalLabel">Rate This Course</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex align-items-center">
+          <div class="star-rating" data-initial-rating="{{ user_course_rating|default:'0' }}" data-form-id="courseRatingForm">
+            <i class="fas fa-star" data-value="1"></i>
+            <i class="fas fa-star" data-value="2"></i>
+            <i class="fas fa-star" data-value="3"></i>
+            <i class="fas fa-star" data-value="4"></i>
+            <i class="fas fa-star" data-value="5"></i>
+          </div>
+          
+          <form id="courseRatingForm" method="POST" action="{% url 'rate_course' course.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="rating" id="courseRatingValue" value="{{ user_course_rating|default:'0' }}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          </form>
+
+          <div class="ms-3">
+            {% if course_avg_rating %}
+              <small class="text-muted">Avg: {{ course_avg_rating|floatformat:1 }} / 5 ({{ course_rating_count }} ratings)</small>
+            {% else %}
+              <small class="text-muted">No ratings yet</small>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get elements
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const overlay = document.getElementById('sidebarOverlay');
+    const mainContent = document.getElementById('lectureContent');
+    
+    // State
+    let sidebarOpen = false;
+    
+    // Set initial state from localStorage (default to closed)
+    if (localStorage.getItem('sidebarOpen') === 'true') {
+      openSidebar();
+    }
+    
+    // Toggle sidebar
+    function toggleSidebar() {
+      if (sidebarOpen) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    }
+    
+    // Open sidebar
+    function openSidebar() {
+      sidebar.style.left = '0';
+      toggleBtn.style.left = '280px';
+      toggleIcon.classList.remove('fa-bars');
+      toggleIcon.classList.add('fa-times');
+      overlay.style.opacity = '0.5';
+      overlay.style.visibility = 'visible';
+      overlay.style.pointerEvents = 'auto';
+      sidebarOpen = true;
+      localStorage.setItem('sidebarOpen', 'true');
+      
+      // Adjust main content on desktop
+      if (window.innerWidth >= 768 && mainContent) {
+        mainContent.style.marginLeft = '280px';
+        mainContent.style.width = 'calc(100% - 280px)';
+        mainContent.style.transition = 'margin-left 0.3s, width 0.3s';
+      }
+    }
+    
+    // Close sidebar
+    function closeSidebar() {
+      sidebar.style.left = '-280px';
+      toggleBtn.style.left = '0';
+      toggleIcon.classList.remove('fa-times');
+      toggleIcon.classList.add('fa-bars');
+      overlay.style.opacity = '0';
+      overlay.style.visibility = 'hidden';
+      overlay.style.pointerEvents = 'none';
+      sidebarOpen = false;
+      localStorage.setItem('sidebarOpen', 'false');
+      
+      // Reset main content
+      if (mainContent) {
+        mainContent.style.marginLeft = '0';
+        mainContent.style.width = '100%';
+      }
+    }
+    
+    // Event listeners
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', toggleSidebar);
+    }
+    
+    if (overlay) {
+      overlay.addEventListener('click', closeSidebar);
+    }
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+      if (window.innerWidth < 768 && 
+          sidebarOpen && 
+          !sidebar.contains(event.target) && 
+          event.target !== toggleBtn && 
+          !toggleBtn.contains(event.target)) {
+        closeSidebar();
+      }
+    });
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+      if (window.innerWidth < 768) {
+        if (mainContent) {
+          mainContent.style.marginLeft = '0';
+          mainContent.style.width = '100%';
+        }
+      } else if (sidebarOpen) {
+        if (mainContent) {
+          mainContent.style.marginLeft = '280px';
+          mainContent.style.width = 'calc(100% - 280px)';
+        }
+      }
+    });
+    
+    // Keyboard shortcut (Alt+S)
+    document.addEventListener('keydown', function(e) {
+      if (e.altKey && e.key === 's') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    });
+  });
+</script>

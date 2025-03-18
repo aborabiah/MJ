@@ -1,0 +1,15 @@
+*.sqlite3
+*.sqlite
+.env
+.env*
+__pycache__/
+*.py[cod]
+*.class
+.DS_Store
+*.pyc
+env/
+venv/
+.idea/
+.vscode/
+media/
+local_settings.py

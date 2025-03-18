@@ -1,0 +1,611 @@
+{% extends 'base_lecture.html' %}
+{% load course_extras %}
+{% block title %}
+  {{ course.course_title }} | {{ lecture_selected.lecture_title }}
+{% endblock title %}
+
+{% block meta %}
+  <meta name="description" content="{{ course.seo_course_description }}">
+  <meta name="keywords" content="{{ course.seo_course_keywords }}">
+{% endblock meta %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Include sidebar -->
+  {% include 'partials/_lecture_sidebar.html' %}
+
+  <!-- Main content area -->
+  <main role="main" id="lectureContent" class="px-md-4">
+    {% if lecture_selected %}
+      <!-- Lecture Header -->
+      <!-- Changed: removed 'border-bottom' and added 'bg-light p-4 rounded shadow-sm' -->
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 bg-light p-4 rounded shadow-sm">
+        <div>
+          <h1 class="h2">{{ lecture_selected.lecture_title }}</h1>
+          <!-- Stats -->
+          <div class="d-flex align-items-center mt-2">
+            <div class="me-3">
+              <i class="fas fa-eye text-muted"></i>
+              <!-- Changed ms-1 to ms-2 for extra spacing -->
+              <span class="ms-2">{{ lecture_selected.views.count|default:"0" }} views</span>
+            </div>
+            <div class="me-3">
+              <i class="fas fa-users text-muted"></i>
+              <!-- Changed ms-1 to ms-2 -->
+              <span class="ms-2">{{ course.enroll_set.count }} enrolled</span>
+            </div>
+            <div>
+              <i class="fas fa-calendar text-muted"></i>
+              <!-- Changed ms-1 to ms-2 -->
+              <span class="ms-2">{{ lecture_selected.lecture_created_at|date }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="btn-toolbar mb-2 mb-md-0">
+          {% if lecture_selected.lecture_file %}
+            <a href="{{ lecture_selected.lecture_file.url }}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius: 0.5rem;">
+              <i class="fas fa-download me-1"></i>
+              Download Notes
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Video Section -->
+      {% if lecture_selected.lecture_video %}
+        <div class="video-container mb-4">
+          <iframe id="lectureVideo"
+                  src="https://www.youtube.com/embed/{{ lecture_selected.lecture_video }}"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen>
+          </iframe>
+        </div>
+      {% endif %}
+
+      <!-- Lecture Rating Section -->
+      <div class="card shadow-sm mb-4" style="border-radius: 0.75rem;">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Rate This Lecture</h5>
+          <div class="d-flex align-items-center">
+            <!-- Star rating container -->
+            <div class="star-rating"
+                 data-initial-rating="{{ lecture_rating|default:'0' }}"
+                 data-item-type="lecture"
+                 data-form-id="lectureRatingForm">
+              <i class="fas fa-star" data-value="1"></i>
+              <i class="fas fa-star" data-value="2"></i>
+              <i class="fas fa-star" data-value="3"></i>
+              <i class="fas fa-star" data-value="4"></i>
+              <i class="fas fa-star" data-value="5"></i>
+            </div>
+            
+            <!-- Hidden rating form (posted via JavaScript on click/hover) -->
+            <form id="lectureRatingForm"
+                  method="post"
+                  action="{% url 'rate_lecture' lecture_selected.id %}"
+                  style="display:none;">
+              {% csrf_token %}
+              <input type="hidden" name="rating" id="lectureRatingValue" 
+                     value="{{ lecture_rating|default:'0' }}">
+            </form>
+
+            <!-- Display the average rating next to the stars -->
+            <div class="ms-3">
+              {% if lecture_avg_rating %}
+                <small class="text-muted">
+                  Avg: {{ lecture_avg_rating|floatformat:1 }} / 5 ({{ lecture_rating_count }} ratings)
+                </small>
+              {% else %}
+                <small class="text-muted">No ratings yet</small>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Description Section -->
+      <div class="card shadow-sm mb-4" style="border-radius: 0.75rem;">
+        <div class="card-body">
+          <h5 class="card-title mb-3">About this lecture</h5>
+          <p class="card-text">{{ lecture_selected.lecture_description }}</p>
+        </div>
+      </div>
+
+      <!-- Q&A Section -->
+      <div class="card shadow-sm mb-4" style="border-radius: 0.75rem;">
+        <div class="card-header bg-white" style="border-radius: 0.75rem 0.75rem 0 0; border-bottom: none;">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Questions & Answers</h5>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#askQuestionModal" style="border-radius: 0.5rem;">
+              <i class="fas fa-plus me-1"></i>
+              Ask a Question
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          {% if questions %}
+            {% for question in questions %}
+              <div class="card shadow-sm mb-4" style="border-radius: 0.75rem;">
+                <!-- Question Header -->
+                <div class="card-header d-flex align-items-center" style="border-radius: 0.75rem 0.75rem 0 0; border-bottom: none; background-color: #fff;">
+                  <!-- User Avatar -->
+                  <div class="flex-shrink-0 me-2">
+                    {% if question.user.profile.image %}
+                      <img src="{{ question.user.profile.image.url }}"
+                           class="rounded-circle"
+                           width="40" height="40"
+                           alt="{{ question.user.username }}">
+                    {% else %}
+                      <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white"
+                           style="width: 40px; height: 40px;">
+                        {{ question.user.username|make_list|first|upper }}
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <!-- Question Title & Meta -->
+                  <div class="flex-grow-1">
+                    <h5 class="mb-0">{{ question.title }}</h5>
+                    <small class="text-muted">
+                      {{ question.user.username }} • {{ question.created_at|timesince }} ago
+                    </small>
+                  </div>
+                  {% if question.user == request.user %}
+                    <div class="mt-2">
+                      <!-- Edit Button: triggers the edit modal -->
+                      <button type="button" class="btn btn-sm btn-outline-secondary me-2" style="border-radius: 0.5rem;"
+                              data-bs-toggle="modal" data-bs-target="#editQuestionModal{{ question.id }}">
+                        Edit
+                      </button>
+                      <!-- Delete Button: triggers the delete modal -->
+                      <button type="button" class="btn btn-sm btn-outline-danger" style="border-radius: 0.5rem;"
+                              data-bs-toggle="modal" data-bs-target="#deleteQuestionModal{{ question.id }}">
+                        Delete
+                      </button>
+                    </div>
+                  {% endif %}
+                  
+                  <!-- Optional Timestamp Link -->
+                  {% if question.video_timestamp %}
+                    <a href="#" class="ms-3 text-primary timestamp-link"
+                       data-time="{{ question.video_timestamp }}">
+                      <i class="fas fa-play-circle me-1"></i>
+                      {{ question.video_timestamp }}s
+                    </a>
+                  {% endif %}
+                </div>
+
+                <!-- Question Body -->
+                <div class="card-body">
+                  <p class="mb-0">{{ question.content }}</p>
+                </div>
+
+                <!-- Answers (if any) -->
+                {% if question.answers.exists %}
+                  <ul class="list-group list-group-flush">
+                    {% for answer in question.answers.all %}
+                      <li class="list-group-item" style="border: none;">
+                        <div class="d-flex align-items-start">
+                          <!-- Answer User Avatar -->
+                          <div class="flex-shrink-0 me-2">
+                            {% if answer.user.profile.image %}
+                              <img src="{{ answer.user.profile.image.url }}"
+                                   class="rounded-circle"
+                                   width="32" height="32"
+                                   alt="{{ answer.user.username }}">
+                            {% else %}
+                              <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
+                                   style="width: 32px; height: 32px;">
+                                {{ answer.user.username|make_list|first|upper }}
+                              </div>
+                            {% endif %}
+                          </div>
+
+                          <!-- Answer Content & Meta -->
+                          <div class="flex-grow-1">
+                            <p class="mb-1">{{ answer.content }}</p>
+                            <small class="text-muted">
+                              {{ answer.user.username }} • {{ answer.created_at|timesince }} ago
+                            </small>
+                          </div>
+                        </div>
+
+                        <!-- Rating Form for the Answer -->
+                        <div class="mt-2">
+                          <form id="ratingForm{{ answer.id }}" method="post" action="{% url 'rate_answer' answer.id %}">
+                            {% csrf_token %}
+                            <div class="star-rating"
+                                 data-initial-rating="{{ answer.user_rating|default:'0' }}"
+                                 data-answer-id="{{ answer.id }}">
+                              <i class="fas fa-star" data-value="1"></i>
+                              <i class="fas fa-star" data-value="2"></i>
+                              <i class="fas fa-star" data-value="3"></i>
+                              <i class="fas fa-star" data-value="4"></i>
+                              <i class="fas fa-star" data-value="5"></i>
+                            </div>
+                            <!-- Hidden input that stores the chosen rating -->
+                            <input type="hidden" name="rating" id="ratingValue{{ answer.id }}" value="{{ answer.user_rating|default:0 }}" />
+                          </form>
+                          
+                          <!-- Optionally, display average rating -->
+                          {% if answer.avg_rating %}
+                            <small class="text-muted ms-2">
+                              Avg: {{ answer.avg_rating|floatformat:1 }} / 5 ({{ answer.ratings.count }} ratings)
+                            </small>
+                          {% endif %}
+                        </div>
+
+                        {% if answer.user == request.user %}
+                          <div class="mt-2 d-flex justify-content-end gap-2">
+                            <!-- Edit button: triggers edit modal -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary btn-icon"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editAnswerModal{{ answer.id }}"
+                                    title="Edit this Answer"
+                                    style="border-radius: 0.5rem;">
+                              <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <!-- Delete button: triggers delete modal -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger btn-icon"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteAnswerModal{{ answer.id }}"
+                                    title="Delete this Answer"
+                                    style="border-radius: 0.5rem;">
+                              <i class="fa-solid fa-trash"></i>
+                            </button>
+                          </div>
+                        {% endif %}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+
+                <!-- Answer Form -->
+                <div class="card-footer bg-white" style="border-radius: 0 0 0.75rem 0.75rem; border-top: none;">
+                  <form method="post" action="{% url 'add_answer' question.id %}" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <input type="text"
+                           name="content"
+                           class="form-control"
+                           placeholder="Write an answer..."
+                           required>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 0.5rem;">Answer</button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center py-5">
+              <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+              <p class="text-muted">No questions yet. Be the first to ask!</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% else %}
+      <div class="alert alert-info mt-5" role="alert">
+        <i class="fas fa-info-circle me-2"></i>
+        Lectures not added yet. Please come back later.
+      </div>
+      <a href="{% url 'home' %}" class="btn btn-primary" style="border-radius: 0.5rem;">
+        <i class="fas fa-home me-1"></i>
+        Go Home
+      </a>
+    {% endif %}
+  </main>
+</div>
+
+<!-- Ask Question Modal -->
+{% if lecture_selected %}
+<div class="modal fade" id="askQuestionModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius: 0.75rem;">
+      <div class="modal-header">
+        <h5 class="modal-title">Ask a Question</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{% url 'ask_question' lecture_selected.id %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Question Title</label>
+            <input type="text"
+                   class="form-control"
+                   name="title"
+                   placeholder="What's your question about?"
+                   required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Question Details</label>
+            <textarea class="form-control"
+                      name="content"
+                      rows="4"
+                      placeholder="Provide more details about your question..."
+                      required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Video Timestamp (optional)</label>
+            <div class="input-group">
+              <input type="number"
+                     class="form-control"
+                     name="video_timestamp"
+                     id="timestampInput"
+                     placeholder="Enter time in seconds">
+              <button type="button"
+                      class="btn btn-outline-secondary"
+                      id="getCurrentTime"
+                      style="border-radius: 0.5rem;">
+                Get Current Time
+              </button>
+            </div>
+            <div class="form-text">
+              This will link your question to a specific moment in the video
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 0.5rem;">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="border-radius: 0.5rem;">Submit Question</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% block extra_js %}
+<style>
+  .btn-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 7%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  
+  .video-container {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 ratio */
+    height: 0;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  
+  .video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Modern design tweaks */
+  body {
+    background-color: #f8f9fa;
+  }
+
+  .card {
+    border: none;
+    border-radius: 0.75rem;
+  }
+
+  .card-header {
+    border-bottom: none;
+    background-color: #fff;
+    border-radius: 0.75rem 0.75rem 0 0;
+  }
+
+  .card.shadow-sm {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .rounded-circle {
+    border: 2px solid #fff;
+  }
+
+  .card-body p,
+  .list-group-item p {
+    line-height: 1.6;
+  }
+
+  .btn-primary {
+    border: none;
+    border-radius: 0.5rem;
+  }
+
+  .btn-outline-primary {
+    border-radius: 0.5rem;
+  }
+</style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script>
+  // YouTube video functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    let player;
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('lectureVideo', {
+        events: {
+          'onReady': onPlayerReady
+        }
+      });
+    }
+
+    function onPlayerReady() {
+      console.log('Player is ready');
+    }
+
+    if (document.getElementById('lectureVideo')) {
+      onYouTubeIframeAPIReady();
+    }
+
+    document.querySelectorAll('.timestamp-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const time = parseInt(link.dataset.time);
+        if (player && player.seekTo) {
+          player.seekTo(time);
+          player.playVideo();
+        }
+      });
+    });
+
+    const getCurrentTimeBtn = document.getElementById('getCurrentTime');
+    if (getCurrentTimeBtn) {
+      getCurrentTimeBtn.addEventListener('click', () => {
+        if (player && player.getCurrentTime) {
+          const currentTime = Math.floor(player.getCurrentTime());
+          document.getElementById('timestampInput').value = currentTime;
+        }
+      });
+    }
+  });
+</script>
+
+<script>
+  // Star rating functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const starRatings = document.querySelectorAll('.star-rating');
+    
+    starRatings.forEach(function(starRating) {
+      const hiddenInput = starRating.parentElement.querySelector('input[name="rating"]');
+      const stars = starRating.querySelectorAll('.fa-star');
+      let initialRating = parseInt(starRating.dataset.initialRating) || 0;
+      
+      function highlightStars(rating) {
+        stars.forEach(star => {
+          const value = parseInt(star.dataset.value);
+          star.classList.toggle('text-warning', value <= rating);
+        });
+      }
+      
+      highlightStars(initialRating);
+      
+      stars.forEach(star => {
+        star.addEventListener('mouseover', function() {
+          highlightStars(parseInt(star.dataset.value));
+        });
+        
+        star.addEventListener('mouseleave', function() {
+          highlightStars(hiddenInput.value);
+        });
+        
+        star.addEventListener('click', function() {
+          const newRating = parseInt(star.dataset.value);
+          hiddenInput.value = newRating;
+          highlightStars(newRating);
+          
+          const formId = starRating.getAttribute('data-form-id');
+          if (formId) {
+            document.getElementById(formId).submit();
+          } else {
+            starRating.closest('form').submit();
+          }
+        });
+      });
+    });
+  });
+</script>
+
+<script>
+  // Fixed sidebar JavaScript
+  document.addEventListener('DOMContentLoaded', function() {
+    if (!document.querySelector('.sidebar-overlay')) {
+      const overlay = document.createElement('div');
+      overlay.className = 'sidebar-overlay';
+      document.body.appendChild(overlay);
+    }
+    
+    const sidebarWrapper = document.getElementById('sidebar-container');
+    const mainContent = document.getElementById('lectureContent');
+    const desktopToggle = document.getElementById('desktopSidebarToggle');
+    const mobileToggle = document.getElementById('mobileSidebarToggle');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const overlay = document.querySelector('.sidebar-overlay');
+    
+    localStorage.setItem('sidebarCollapsed', 'true');
+    document.body.classList.remove('sidebar-open');
+    
+    if (mainContent) {
+      mainContent.style.marginLeft = '';
+      mainContent.style.width = '';
+    }
+    
+    function toggleSidebar() {
+      if (!sidebarWrapper) {
+        console.error('Sidebar element not found!');
+        return;
+      }
+      
+      const isCollapsed = sidebarWrapper.classList.contains('collapsed');
+      sidebarWrapper.classList.toggle('collapsed');
+      document.body.classList.toggle('sidebar-open', !isCollapsed);
+      
+      if (toggleIcon) {
+        if (isCollapsed) {
+          toggleIcon.classList.remove('fa-chevron-right');
+          toggleIcon.classList.add('fa-chevron-left');
+        } else {
+          toggleIcon.classList.remove('fa-chevron-left');
+          toggleIcon.classList.add('fa-chevron-right');
+        }
+      }
+      
+      localStorage.setItem('sidebarCollapsed', isCollapsed ? 'false' : 'true');
+      
+      if (desktopToggle) {
+        desktopToggle.style.display = 'none';
+        desktopToggle.offsetHeight; // Force reflow
+        desktopToggle.style.display = '';
+      }
+    }
+    
+    if (desktopToggle) {
+      desktopToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        toggleSidebar();
+      });
+      desktopToggle.style.display = 'flex';
+    }
+    
+    if (mobileToggle) {
+      mobileToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (sidebarWrapper) {
+          sidebarWrapper.classList.add('mobile-visible');
+        }
+        if (overlay) {
+          overlay.classList.add('active');
+        }
+      });
+    }
+    
+    if (overlay) {
+      overlay.addEventListener('click', function() {
+        if (sidebarWrapper) {
+          sidebarWrapper.classList.remove('mobile-visible');
+        }
+        overlay.classList.remove('active');
+      });
+    }
+    
+    document.addEventListener('keydown', function(e) {
+      if (e.altKey && e.key === 's') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    });
+  });
+</script>
+{% endblock extra_js %}
+
+{% endblock content %}

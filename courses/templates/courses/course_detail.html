@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ course.seo_course_title }}{% endblock title %}
+
+{% block meta %}
+    <meta name="description" content="{{ course.seo_course_description }}">
+    <meta name="keywords" content="{{ course.seo_course_keywords }}">
+{% endblock meta %}
+
+{% block content %}
+{% include 'partials/_messages.html' %}
+
+<!-- Add Font Awesome CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+.lecture-btn {
+    min-width: 80px !important;
+    height: 28px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    border-radius: 4px !important;
+    background: #0d6efd !important;
+    color: white !important;
+    border: none !important;
+    transition: all 0.15s ease !important;
+}
+
+.lecture-btn:hover {
+    background: #0b5ed7 !important;
+}
+
+.lecture-btn i {
+    font-size: 10px !important;
+    margin-right: 5px !important;
+}
+
+.lecture-btn.locked {
+    background: #adb5bd !important;
+    color: white !important;
+    opacity: 0.8 !important;
+    cursor: not-allowed !important;
+}
+
+.lecture-btn.locked:hover {
+    background: #adb5bd !important;
+}
+</style>
+
+<div class="py-5" style="background-color: #f8f9fa;">
+    <div class="container">
+        <div class="row mb-5">
+            <!-- Left Column -->
+            <div class="col-lg-8">
+                <!-- Course Header -->
+                <div class="bg-white rounded-4 shadow-sm p-4 mb-4">
+                    <!-- Topics -->
+                    <div class="d-flex align-items-center mb-4">
+                        {% for topic in course.course_topic.all %}
+                            <span class="badge bg-primary rounded-pill px-3 py-2 me-2">
+                                <i class="fas fa-tag me-1"></i>
+                                {{ topic.topic_title }}
+                            </span>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Course Title & Description -->
+                    <h1 class="display-4 fw-bold mb-3">{{ course.course_title }}</h1>
+                    <p class="lead text-muted mb-4">{{ course.course_description }}</p>
+                
+                    <!-- Instructor Info (if exists) -->
+                    {% if course.instructor %}
+                    <div class="d-flex align-items-center mb-4">
+                        {% if course.instructor.profile.image %}
+                            <img src="{{ course.instructor.profile.image.url }}" 
+                                 class="rounded-circle me-4"
+                                 style="width: 45px; height: 45px; object-fit: cover;"
+                                 alt="{{ course.instructor.username }}">
+                        {% else %}
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3 text-white"
+                                 style="width: 45px; height: 45px; margin-right: 16px;">
+                                {{ course.instructor.username|make_list|first|upper }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <a href="{% url 'instructor-profile' course.instructor.username %}" 
+                               class="text-decoration-none">
+                            <h6 class="mb-1 fs-6">{{ course.instructor.get_full_name|default:course.instructor.username }}</h6>
+                        </a>
+                        <p class="text-muted mb-0" style="font-size: 11px;">Course Instructor</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Stats -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            <div class="px-4 py-3 bg-light rounded-3 text-center">
+                                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                                <div class="text-muted small">Students Enrolled</div>
+                                <div class="h4 mb-0 fw-bold">{{ course.enroll_set.count }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="px-4 py-3 bg-light rounded-3 text-center">
+                                <i class="fas fa-book-reader fa-2x text-primary mb-2"></i>
+                                <div class="text-muted small">Total Lectures</div>
+                                <div class="h4 mb-0 fw-bold">{{ lectures.count }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="px-4 py-3 bg-light rounded-3 text-center">
+                                <i class="fas fa-eye fa-2x text-primary mb-2"></i>
+                                <div class="text-muted small">Total Views</div>
+                                <div class="h4 mb-0 fw-bold">{{ total_views|default:"0" }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    {% if enrolled %}
+                        <a href="{% url 'lecture' course.course_slug %}" 
+                           class="btn btn-primary btn-lg w-100 py-3 shadow-sm">
+                            <i class="fas fa-play-circle" style="margin-right: 15px;"></i>Continue Learning
+                        </a>
+                    {% else %}
+                        <div class="card bg-gradient bg-dark text-white p-4 mb-4 border-0 shadow">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="mb-2 fw-bold">Ready to Start Learning?</h3>
+                                    <p class="mb-0 lead">Join {{ course.enroll_set.count }} other students on their learning journey!</p>
+                                </div>
+                                <div class="text-end">
+                                    {% if course.price > 0 %}
+                                        <div class="text-decoration-line-through h5 mb-2 opacity-75">${{ course.price }}</div>
+                                        <div class="h2 text-success mb-0 fw-bold">FREE</div>
+                                    {% else %}
+                                        <div class="h2 text-success mb-0 fw-bold">FREE</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{% url 'enroll' course.id %}" 
+                           class="btn btn-success btn-lg w-100 py-3 shadow-sm">
+                            <i class="fas fa-graduation-cap" style="margin-right: 15px;"></i>Enroll Now - Start Learning Today!
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-lg-4">
+                {% if course.course_image %}
+                    <img src="{{ course.course_image.url }}" 
+                         class="img-fluid rounded shadow-sm mb-4" 
+                         alt="{{ course.course_title }}">
+                {% endif %}
+
+                <!-- Course Content -->
+                <div class="card shadow-sm rounded-4 border-0">
+                    <div class="card-header bg-white p-4 border-0">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-book-open me-2 text-primary"></i>   Course Content
+                        </h5>
+                    </div>
+                    <div class="list-group list-group-flush rounded-bottom-4">
+                        {% if lectures %}
+                            {% for lecture in lectures %}
+                                <div class="list-group-item px-4 py-3 {% if forloop.last %}rounded-bottom-4{% endif %}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-5" style="min-width: 45px;">
+                                                <span class="badge rounded-circle bg-light text-dark p-2" style="min-width: 10px;">
+                                                    {{ forloop.counter }}
+                                                </span>
+                                            </div>
+                                            <div style="margin-right: 24px;">
+                                                <h6 class="mb-0" style="font-size: 14px;">{{ lecture.lecture_title }}</h6>
+                                            </div>
+                                        </div>
+                                        {% if enrolled %}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary rounded-pill lecture-btn"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#Modal{{ lecture.id }}">
+                                                <i class="fas fa-play"></i>Watch
+                                            </button>
+                                        {% else %}
+                                            {% if lecture.lecture_previewable == "Yes" %}
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-primary rounded-pill lecture-btn"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#Modal{{ lecture.id }}">
+                                                    <i class="fas fa-play"></i>Preview
+                                                </button>
+                                            {% else %}
+                                                <button type="button" class="lecture-btn locked" disabled>
+                                                    <i class="fas fa-lock"></i>Locked
+                                                </button>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                {% if lecture.lecture_video and lecture.lecture_previewable == "Yes" %}
+                                    <div class="modal fade" id="Modal{{lecture.id}}" tabindex="-1">
+                                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow">
+                                                <div class="modal-header border-0 bg-dark text-white">
+                                                    <h5 class="modal-title">
+                                                        <i class="fas fa-play-circle me-2"></i>
+                                                        {{ lecture.lecture_title }}
+                                                    </h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body p-0">
+                                                    <div class="ratio ratio-16x9">
+                                                        <iframe src="https://www.youtube.com/embed/{{ lecture.lecture_video }}" 
+                                                                title="{{ lecture.lecture_title }}" 
+                                                                allowfullscreen>
+                                                        </iframe>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item text-center text-muted py-5">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                <p class="mb-0">No lectures available yet</p>
+                                <small>Check back soon for updates!</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% load i18n %}
+
+{% block title %}
+Sign Up
+{% endblock title %}
+
+{% block content %}
+    <div class="album py-5 bg-light">
+        {% include 'partials/_messages.html' %}
+
+        <div class="container">
+
+            <form class="form-signin" method="POST" action="{% url 'account_signup' %}">
+                {% csrf_token %}
+                
+                <h1 class="h3 mb-3 font-weight-normal text-center">Sign Up and Start Learning!</h1>
+                <hr>
+
+                <!-- Username Field -->
+                <div class="form-group">
+                    <label for="id_username">Username</label>
+                    <input type="text" name="username" id="id_username" class="form-control {% if form.username.errors %}is-invalid{% endif %}" placeholder="Choose a username" required>
+                    {% if form.username.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.username.errors|striptags }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Email Field -->
+                <div class="form-group">
+                    <label for="id_email">Email</label>
+                    <input type="email" name="email" id="id_email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" placeholder="Enter your email" required>
+                    {% if form.email.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.email.errors|striptags }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label for="id_password1">Password</label>
+                    <input type="password" name="password1" id="id_password1" class="form-control {% if form.password1.errors %}is-invalid{% endif %}" placeholder="Create a password" required>
+                    {% if form.password1.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.password1.errors|striptags }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Password Confirmation Field -->
+                <div class="form-group">
+                    <label for="id_password2">Confirm Password</label>
+                    <input type="password" name="password2" id="id_password2" class="form-control {% if form.password2.errors %}is-invalid{% endif %}" placeholder="Confirm your password" required>
+                    {% if form.password2.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.password2.errors|striptags }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                {% endif %}
+
+
+                <button class="btn btn-lg btn-primary btn-block" type="submit">Sign Up</button>
+                    <p class="my-3 text-muted text-center"><small>By signing up, you agree to our Terms of Use and Privacy Policy.</small></p>
+                    <hr>
+                    <p class="mb-3 text-muted text-center">Already have an account? <a href="{% url 'account_login' %}"><strong>Log In</strong></a></p>
+            </form>
+
+           
+
+        </div>
+    </div>
+
+{% endblock %}

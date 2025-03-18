@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ instructor.get_full_name|default:instructor.username }} - Instructor Profile{% endblock %}
+
+{% block content %}
+<!-- Instructor Header -->
+<div class="bg-primary text-white py-5">
+    <div class="container">
+        <div class="d-flex align-items-center gap-4">
+            <!-- Profile Picture/Initial -->
+            <div class="profile-image">
+                {% if instructor.profile.image %}
+                    <img src="{{ instructor.profile.image.url }}" 
+                         class="rounded-circle bg-white"
+                         style="width: 120px; height: 120px; object-fit: cover;"
+                         alt="{{ instructor.username }}">
+                {% else %}
+                    <div class="rounded-circle d-flex align-items-center justify-content-center letter-avatar"
+                         data-initial="{{ instructor.get_full_name|default:instructor.username|make_list|first|upper }}"
+                         style="width: 120px; height: 120px;">
+                        <span class="display-4 text-white">
+                            {{ instructor.get_full_name|default:instructor.username|make_list|first|upper }}
+                        </span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Instructor Info -->
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <h1 class="h2 mb-0">{{ instructor.username }}</h1>
+                    <span class="badge bg-warning text-dark px-3 py-2">Instructor</span>
+                </div>
+                <div class="d-flex gap-4 text-white">
+                    <div>{{ instructor_courses.count }} Course{{ instructor_courses.count|pluralize }}</div>
+                    <div>{{ total_students }} Student{{ total_students|pluralize }}</div>
+                    <div>{{ avg_rating|default:"N/A" }} Average Rating</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">About the Instructor</h5>
+                    {% if instructor.email %}
+                        <p class="mb-3">
+                            <i class="fas fa-envelope me-2 text-muted"></i>
+                            {{ instructor.email }}
+                        </p>
+                    {% endif %}
+                    <p class="mb-3">
+                        <i class="fas fa-calendar me-2 text-muted"></i>
+                        Joined {{ instructor.date_joined|date:"F Y" }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Teaching Statistics</h5>
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted">Students</div>
+                            <div class="h5 mb-0">{{ total_students }}</div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted">Courses</div>
+                            <div class="h5 mb-0">{{ instructor_courses.count }}</div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted">Reviews</div>
+                            <div class="h5 mb-0">{{ total_reviews|default:"0" }}</div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted">Avg. Rating</div>
+                            <div class="h5 mb-0">{{ avg_rating|default:"N/A" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Courses -->
+        <div class="col-md-8">
+            <h5 class="mb-4">Courses by {{ instructor.username }}</h5>
+            {% if instructor_courses %}
+                {% for course in instructor_courses %}
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                {% if course.course_image %}
+                                    <img src="{{ course.course_image.url }}" 
+                                         class="img-fluid rounded-start h-100"
+                                         style="object-fit: cover;"
+                                         alt="{{ course.course_title }}">
+                                {% else %}
+                                    <div class="bg-light d-flex align-items-center justify-content-center h-100">
+                                        <i class="fas fa-book fa-2x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-2">{{ course.course_title }}</h5>
+                                    {% if course.course_topic.all %}
+                                        <p class="card-text mb-3">
+                                            <small class="text-muted">
+                                                {{ course.course_topic.all|join:", " }}
+                                            </small>
+                                        </p>
+                                    {% endif %}
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="h5 text-primary mb-0">
+                                            {% if course.price == 0 %}
+                                                Free
+                                            {% else %}
+                                                ${{ course.price }}
+                                            {% endif %}
+                                        </span>
+                                        <a href="{% url 'course-detail' course.course_slug %}" 
+                                           class="btn btn-primary">
+                                            View Course
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    No courses available at the moment.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 1rem; }
+    .gap-4 { gap: 1.5rem; }
+
+    .letter-avatar {
+        background-color: var(--avatar-color);
+    }
+
+    /* Random colors for letter avatars */
+    .letter-avatar[data-initial="A"] { --avatar-color: #FF6B6B; }
+    .letter-avatar[data-initial="B"] { --avatar-color: #4ECDC4; }
+    .letter-avatar[data-initial="C"] { --avatar-color: #45B7D1; }
+    .letter-avatar[data-initial="D"] { --avatar-color: #96CEB4; }
+    .letter-avatar[data-initial="E"] { --avatar-color: #D4A5A5; }
+    .letter-avatar[data-initial="F"] { --avatar-color: #9B59B6; }
+    .letter-avatar[data-initial="G"] { --avatar-color: #3498DB; }
+    .letter-avatar[data-initial="H"] { --avatar-color: #F1C40F; }
+    .letter-avatar[data-initial="I"] { --avatar-color: #E74C3C; }
+    .letter-avatar[data-initial="J"] { --avatar-color: #2ECC71; }
+    .letter-avatar[data-initial="K"] { --avatar-color: #E67E22; }
+    .letter-avatar[data-initial="L"] { --avatar-color: #1ABC9C; }
+    .letter-avatar[data-initial="M"] { --avatar-color: #34495E; }
+    .letter-avatar[data-initial="N"] { --avatar-color: #8E44AD; }
+    .letter-avatar[data-initial="O"] { --avatar-color: #2980B9; }
+    .letter-avatar[data-initial="P"] { --avatar-color: #F39C12; }
+    .letter-avatar[data-initial="Q"] { --avatar-color: #D35400; }
+    .letter-avatar[data-initial="R"] { --avatar-color: #16A085; }
+    .letter-avatar[data-initial="S"] { --avatar-color: #27AE60; }
+    .letter-avatar[data-initial="T"] { --avatar-color: #2C3E50; }
+    .letter-avatar[data-initial="U"] { --avatar-color: #E84393; }
+    .letter-avatar[data-initial="V"] { --avatar-color: #00B894; }
+    .letter-avatar[data-initial="W"] { --avatar-color: #6C5CE7; }
+    .letter-avatar[data-initial="X"] { --avatar-color: #FF7675; }
+    .letter-avatar[data-initial="Y"] { --avatar-color: #55E6C1; }
+    .letter-avatar[data-initial="Z"] { --avatar-color: #FDA7DF; }
+    
+    /* Fallback color for any other characters */
+    .letter-avatar:not([data-initial^="A"]):not([data-initial^="B"]):not([data-initial^="C"]):not([data-initial^="D"]):not([data-initial^="E"]):not([data-initial^="F"]):not([data-initial^="G"]):not([data-initial^="H"]):not([data-initial^="I"]):not([data-initial^="J"]):not([data-initial^="K"]):not([data-initial^="L"]):not([data-initial^="M"]):not([data-initial^="N"]):not([data-initial^="O"]):not([data-initial^="P"]):not([data-initial^="Q"]):not([data-initial^="R"]):not([data-initial^="S"]):not([data-initial^="T"]):not([data-initial^="U"]):not([data-initial^="V"]):not([data-initial^="W"]):not([data-initial^="X"]):not([data-initial^="Y"]):not([data-initial^="Z"]) {
+        --avatar-color: #6c757d;
+    }
+</style>
+{% endblock %}
