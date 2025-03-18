@@ -95,14 +95,10 @@ WSGI_APPLICATION = 'courseproject.wsgi.application'
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'noonuni',
-        'USER': 'postgres',
-        'PASSWORD': 'DbNUCH4GlAOitQqN7leM',
-        'HOST': 'noonuni-01.cps2qokampd1.us-east-1.rds.amazonaws.com',
-        'PORT': '5432',
-    }
+  'default': {
+    'ENGINE': 'django.db.backends.sqlite3',
+    'NAME': BASE_DIR / 'db.sqlite3',
+  }
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -178,9 +174,6 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 SITE_ID = 1
 LOGIN_REDIRECT_URL = '/'
 ACCOUNT_LOGIN_METHODS = {"username", "email"}  # New format
-ACCOUNT_RATE_LIMITS = {
-    "login_failed": {"limit": 5, "timeout": 300}  # New rate-limiting format
-}
 ACCOUNT_EMAIL_REQUIRED=True
 ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = True
 

@@ -18,26 +18,23 @@
   <main role="main" id="lectureContent" class="px-md-4">
     {% if lecture_selected %}
       <!-- Lecture Header -->
-      <!-- Changed: removed 'border-bottom' and added 'bg-light p-4 rounded shadow-sm' -->
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 bg-light p-4 rounded shadow-sm">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 bg-light p-4 rounded shadow-sm">
         <div>
-          <h1 class="h2">{{ lecture_selected.lecture_title }}</h1>
-          <!-- Stats -->
-          <div class="d-flex align-items-center mt-2">
-            <div class="me-3">
-              <i class="fas fa-eye text-muted"></i>
-              <!-- Changed ms-1 to ms-2 for extra spacing -->
-              <span class="ms-2">{{ lecture_selected.views.count|default:"0" }} views</span>
+          <h1 class="h2 mb-3">{{ lecture_selected.lecture_title }}</h1>
+          <!-- Stats with improved spacing -->
+          <!-- Stats with significantly improved spacing -->
+          <div class="d-flex align-items-center mt-3" style="column-gap: 2.5rem;">
+            <div class="stats-item" style="display: flex; align-items: center;">
+              <i class="fas fa-eye text-muted" style="margin-right: 12px; font-size: 1.1rem;"></i>
+              <span style="font-size: 0.95rem; display: inline-block; min-width: 70px;">{{ lecture_selected.views.count|default:"0" }} views</span>
             </div>
-            <div class="me-3">
-              <i class="fas fa-users text-muted"></i>
-              <!-- Changed ms-1 to ms-2 -->
-              <span class="ms-2">{{ course.enroll_set.count }} enrolled</span>
+            <div class="stats-item" style="display: flex; align-items: center;">
+              <i class="fas fa-users text-muted" style="margin-right: 12px; font-size: 1.1rem;"></i>
+              <span style="font-size: 0.95rem; display: inline-block; min-width: 90px;">{{ course.enroll_set.count }} enrolled</span>
             </div>
-            <div>
-              <i class="fas fa-calendar text-muted"></i>
-              <!-- Changed ms-1 to ms-2 -->
-              <span class="ms-2">{{ lecture_selected.lecture_created_at|date }}</span>
+            <div class="stats-item" style="display: flex; align-items: center;">
+              <i class="fas fa-calendar text-muted" style="margin-right: 12px; font-size: 1.1rem;"></i>
+              <span style="font-size: 0.95rem;">{{ lecture_selected.lecture_created_at|date }}</span>
             </div>
           </div>
         </div>
@@ -53,64 +50,100 @@
         </div>
       </div>
 
-      <!-- Video Section -->
-      {% if lecture_selected.lecture_video %}
-        <div class="video-container mb-4">
-          <iframe id="lectureVideo"
-                  src="https://www.youtube.com/embed/{{ lecture_selected.lecture_video }}"
-                  frameborder="0"
-                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen>
-          </iframe>
-        </div>
-      {% endif %}
-
-      <!-- Lecture Rating Section -->
-      <div class="card shadow-sm mb-4" style="border-radius: 0.75rem;">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Rate This Lecture</h5>
-          <div class="d-flex align-items-center">
-            <!-- Star rating container -->
-            <div class="star-rating"
-                 data-initial-rating="{{ lecture_rating|default:'0' }}"
-                 data-item-type="lecture"
-                 data-form-id="lectureRatingForm">
-              <i class="fas fa-star" data-value="1"></i>
-              <i class="fas fa-star" data-value="2"></i>
-              <i class="fas fa-star" data-value="3"></i>
-              <i class="fas fa-star" data-value="4"></i>
-              <i class="fas fa-star" data-value="5"></i>
+      <!-- Video and Content Grid Layout -->
+      <div class="row">
+        <!-- Video Section (reduced size) -->
+        <div class="col-lg-8 mb-4">
+          {% if lecture_selected.lecture_video %}
+            <div class="video-container mb-4 shadow-sm rounded">
+              <iframe id="lectureVideo"
+                      src="https://www.youtube.com/embed/{{ lecture_selected.lecture_video }}"
+                      frameborder="0"
+                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen>
+              </iframe>
             </div>
-            
-            <!-- Hidden rating form (posted via JavaScript on click/hover) -->
-            <form id="lectureRatingForm"
-                  method="post"
-                  action="{% url 'rate_lecture' lecture_selected.id %}"
-                  style="display:none;">
-              {% csrf_token %}
-              <input type="hidden" name="rating" id="lectureRatingValue" 
-                     value="{{ lecture_rating|default:'0' }}">
-            </form>
-
-            <!-- Display the average rating next to the stars -->
-            <div class="ms-3">
-              {% if lecture_avg_rating %}
-                <small class="text-muted">
-                  Avg: {{ lecture_avg_rating|floatformat:1 }} / 5 ({{ lecture_rating_count }} ratings)
-                </small>
-              {% else %}
-                <small class="text-muted">No ratings yet</small>
-              {% endif %}
+          {% endif %}
+          
+          <!-- Description Section -->
+          <div class="card shadow-sm mb-4" style="border-radius: 0.75rem;">
+            <div class="card-body">
+              <h5 class="card-title mb-3">About this lecture</h5>
+              <p class="card-text">{{ lecture_selected.lecture_description }}</p>
             </div>
           </div>
         </div>
-      </div>
-      
-      <!-- Description Section -->
-      <div class="card shadow-sm mb-4" style="border-radius: 0.75rem;">
-        <div class="card-body">
-          <h5 class="card-title mb-3">About this lecture</h5>
-          <p class="card-text">{{ lecture_selected.lecture_description }}</p>
+        
+        <!-- Sidebar Content -->
+        <div class="col-lg-4 mb-4">
+          <!-- Lecture Rating Section -->
+          <div class="card shadow-sm mb-4" style="border-radius: 0.75rem;">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Rate This Lecture</h5>
+              <div class="d-flex align-items-center">
+                <!-- Star rating container -->
+                <div class="star-rating"
+                     data-initial-rating="{{ lecture_rating|default:'0' }}"
+                     data-item-type="lecture"
+                     data-form-id="lectureRatingForm">
+                  <i class="fas fa-star" data-value="1"></i>
+                  <i class="fas fa-star" data-value="2"></i>
+                  <i class="fas fa-star" data-value="3"></i>
+                  <i class="fas fa-star" data-value="4"></i>
+                  <i class="fas fa-star" data-value="5"></i>
+                </div>
+                
+                <!-- Hidden rating form (posted via JavaScript on click/hover) -->
+                <form id="lectureRatingForm"
+                      method="post"
+                      action="{% url 'rate_lecture' lecture_selected.id %}"
+                      style="display:none;">
+                  {% csrf_token %}
+                  <input type="hidden" name="rating" id="lectureRatingValue" 
+                         value="{{ lecture_rating|default:'0' }}">
+                </form>
+
+                <!-- Display the average rating next to the stars -->
+                <div class="ms-3">
+                  {% if lecture_avg_rating %}
+                    <small class="text-muted">
+                      Avg: {{ lecture_avg_rating|floatformat:1 }} / 5 ({{ lecture_rating_count }} ratings)
+                    </small>
+                  {% else %}
+                    <small class="text-muted">No ratings yet</small>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Course Resources Card -->
+          <div class="card shadow-sm mb-4" style="border-radius: 0.75rem;">
+            <div class="card-body">
+              <h5 class="card-title mb-3">
+                <i class="fas fa-folder-open me-2 text-primary"></i>
+                Course Resources
+              </h5>
+              <ul class="list-group list-group-flush">
+                {% if lecture_selected.lecture_file %}
+                <li class="list-group-item px-0 py-2 border-0">
+                  <a href="{{ lecture_selected.lecture_file.url }}" target="_blank" class="text-decoration-none d-flex align-items-center">
+                    <i class="fas fa-file-pdf text-danger me-2"></i>
+                    <span>Lecture Notes</span>
+                    <i class="fas fa-download ms-auto text-muted"></i>
+                  </a>
+                </li>
+                {% endif %}
+                <li class="list-group-item px-0 py-2 border-0">
+                  <a href="#" class="text-decoration-none d-flex align-items-center">
+                    <i class="fas fa-link text-info me-2"></i>
+                    <span>Additional Resources</span>
+                    <i class="fas fa-external-link-alt ms-auto text-muted"></i>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -132,7 +165,7 @@
                 <!-- Question Header -->
                 <div class="card-header d-flex align-items-center" style="border-radius: 0.75rem 0.75rem 0 0; border-bottom: none; background-color: #fff;">
                   <!-- User Avatar -->
-                  <div class="flex-shrink-0 me-2">
+                  <div class="flex-shrink-0 me-3">
                     {% if question.user.profile.image %}
                       <img src="{{ question.user.profile.image.url }}"
                            class="rounded-circle"
@@ -153,28 +186,37 @@
                       {{ question.user.username }} • {{ question.created_at|timesince }} ago
                     </small>
                   </div>
-                  {% if question.user == request.user %}
-                    <div class="mt-2">
-                      <!-- Edit Button: triggers the edit modal -->
-                      <button type="button" class="btn btn-sm btn-outline-secondary me-2" style="border-radius: 0.5rem;"
-                              data-bs-toggle="modal" data-bs-target="#editQuestionModal{{ question.id }}">
-                        Edit
-                      </button>
-                      <!-- Delete Button: triggers the delete modal -->
-                      <button type="button" class="btn btn-sm btn-outline-danger" style="border-radius: 0.5rem;"
-                              data-bs-toggle="modal" data-bs-target="#deleteQuestionModal{{ question.id }}">
-                        Delete
-                      </button>
-                    </div>
-                  {% endif %}
                   
                   <!-- Optional Timestamp Link -->
                   {% if question.video_timestamp %}
-                    <a href="#" class="ms-3 text-primary timestamp-link"
+                    <a href="#" class="ms-3 text-primary timestamp-link badge bg-light text-primary"
                        data-time="{{ question.video_timestamp }}">
                       <i class="fas fa-play-circle me-1"></i>
                       {{ question.video_timestamp }}s
                     </a>
+                  {% endif %}
+                  
+                  <!-- User actions if question belongs to current user -->
+                  {% if question.user == request.user %}
+                    <div class="ms-auto">
+                      <div class="dropdown">
+                        <button class="btn btn-sm btn-light" type="button" id="questionActions{{ question.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                          <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="questionActions{{ question.id }}">
+                          <li>
+                            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editQuestionModal{{ question.id }}">
+                              <i class="fas fa-edit me-2 text-primary"></i> Edit
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#deleteQuestionModal{{ question.id }}">
+                              <i class="fas fa-trash me-2 text-danger"></i> Delete
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
                   {% endif %}
                 </div>
 
@@ -185,12 +227,12 @@
 
                 <!-- Answers (if any) -->
                 {% if question.answers.exists %}
-                  <ul class="list-group list-group-flush">
+                  <div class="list-group list-group-flush">
                     {% for answer in question.answers.all %}
-                      <li class="list-group-item" style="border: none;">
-                        <div class="d-flex align-items-start">
+                      <div class="list-group-item" style="border: none; background-color: #f8f9fa; border-radius: 0.5rem; margin: 0.5rem 1rem;">
+                        <div class="d-flex">
                           <!-- Answer User Avatar -->
-                          <div class="flex-shrink-0 me-2">
+                          <div class="flex-shrink-0 me-3">
                             {% if answer.user.profile.image %}
                               <img src="{{ answer.user.profile.image.url }}"
                                    class="rounded-circle"
@@ -206,63 +248,67 @@
 
                           <!-- Answer Content & Meta -->
                           <div class="flex-grow-1">
-                            <p class="mb-1">{{ answer.content }}</p>
-                            <small class="text-muted">
-                              {{ answer.user.username }} • {{ answer.created_at|timesince }} ago
-                            </small>
-                          </div>
-                        </div>
-
-                        <!-- Rating Form for the Answer -->
-                        <div class="mt-2">
-                          <form id="ratingForm{{ answer.id }}" method="post" action="{% url 'rate_answer' answer.id %}">
-                            {% csrf_token %}
-                            <div class="star-rating"
-                                 data-initial-rating="{{ answer.user_rating|default:'0' }}"
-                                 data-answer-id="{{ answer.id }}">
-                              <i class="fas fa-star" data-value="1"></i>
-                              <i class="fas fa-star" data-value="2"></i>
-                              <i class="fas fa-star" data-value="3"></i>
-                              <i class="fas fa-star" data-value="4"></i>
-                              <i class="fas fa-star" data-value="5"></i>
+                            <div class="d-flex justify-content-between align-items-start">
+                              <div>
+                                <p class="mb-1">{{ answer.content }}</p>
+                                <small class="text-muted">
+                                  {{ answer.user.username }} • {{ answer.created_at|timesince }} ago
+                                </small>
+                              </div>
+                              
+                              {% if answer.user == request.user %}
+                                <div class="dropdown ms-2">
+                                  <button class="btn btn-sm btn-light" type="button" id="answerActions{{ answer.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                  </button>
+                                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="answerActions{{ answer.id }}">
+                                    <li>
+                                      <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editAnswerModal{{ answer.id }}">
+                                        <i class="fas fa-edit me-2 text-primary"></i> Edit
+                                      </button>
+                                    </li>
+                                    <li>
+                                      <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#deleteAnswerModal{{ answer.id }}">
+                                        <i class="fas fa-trash me-2 text-danger"></i> Delete
+                                      </button>
+                                    </li>
+                                  </ul>
+                                </div>
+                              {% endif %}
                             </div>
-                            <!-- Hidden input that stores the chosen rating -->
-                            <input type="hidden" name="rating" id="ratingValue{{ answer.id }}" value="{{ answer.user_rating|default:0 }}" />
-                          </form>
-                          
-                          <!-- Optionally, display average rating -->
-                          {% if answer.avg_rating %}
-                            <small class="text-muted ms-2">
-                              Avg: {{ answer.avg_rating|floatformat:1 }} / 5 ({{ answer.ratings.count }} ratings)
-                            </small>
-                          {% endif %}
-                        </div>
-
-                        {% if answer.user == request.user %}
-                          <div class="mt-2 d-flex justify-content-end gap-2">
-                            <!-- Edit button: triggers edit modal -->
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-secondary btn-icon"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#editAnswerModal{{ answer.id }}"
-                                    title="Edit this Answer"
-                                    style="border-radius: 0.5rem;">
-                              <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
-                            <!-- Delete button: triggers delete modal -->
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-danger btn-icon"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#deleteAnswerModal{{ answer.id }}"
-                                    title="Delete this Answer"
-                                    style="border-radius: 0.5rem;">
-                              <i class="fa-solid fa-trash"></i>
-                            </button>
+                            
+                            <!-- Rating Form for the Answer -->
+                            <div class="mt-2">
+                              <form id="ratingForm{{ answer.id }}" method="post" action="{% url 'rate_answer' answer.id %}">
+                                {% csrf_token %}
+                                <div class="d-flex align-items-center">
+                                  <div class="star-rating"
+                                      data-initial-rating="{{ answer.user_rating|default:'0' }}"
+                                      data-answer-id="{{ answer.id }}">
+                                    <i class="fas fa-star" data-value="1"></i>
+                                    <i class="fas fa-star" data-value="2"></i>
+                                    <i class="fas fa-star" data-value="3"></i>
+                                    <i class="fas fa-star" data-value="4"></i>
+                                    <i class="fas fa-star" data-value="5"></i>
+                                  </div>
+                                  
+                                  <!-- Hidden input that stores the chosen rating -->
+                                  <input type="hidden" name="rating" id="ratingValue{{ answer.id }}" value="{{ answer.user_rating|default:0 }}" />
+                                  
+                                  <!-- Optionally, display average rating -->
+                                  {% if answer.avg_rating %}
+                                    <small class="text-muted ms-2">
+                                      {{ answer.avg_rating|floatformat:1 }} / 5 ({{ answer.ratings.count }} ratings)
+                                    </small>
+                                  {% endif %}
+                                </div>
+                              </form>
+                            </div>
                           </div>
-                        {% endif %}
-                      </li>
+                        </div>
+                      </div>
                     {% endfor %}
-                  </ul>
+                  </div>
                 {% endif %}
 
                 <!-- Answer Form -->
@@ -339,7 +385,7 @@
               <button type="button"
                       class="btn btn-outline-secondary"
                       id="getCurrentTime"
-                      style="border-radius: 0.5rem;">
+                      style="border-radius: 0">
                 Get Current Time
               </button>
             </div>
@@ -376,6 +422,7 @@
     height: 0;
     overflow: hidden;
     margin-bottom: 1rem;
+    border-radius: 0.75rem;
   }
   
   .video-container iframe {
@@ -384,16 +431,23 @@
     left: 0;
     width: 100%;
     height: 100%;
+    border-radius: 0.75rem;
   }
 
   /* Modern design tweaks */
   body {
     background-color: #f8f9fa;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 
   .card {
     border: none;
     border-radius: 0.75rem;
+    transition: all 0.2s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1) !important;
   }
 
   .card-header {
@@ -403,11 +457,12 @@
   }
 
   .card.shadow-sm {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   }
 
   .rounded-circle {
     border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   }
 
   .card-body p,
@@ -416,16 +471,95 @@
   }
 
   .btn-primary {
+    background-color: #5624d0;
     border: none;
     border-radius: 0.5rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: #4c1fb3;
+    transform: translateY(-1px);
   }
 
   .btn-outline-primary {
+    border-color: #5624d0;
+    color: #5624d0;
     border-radius: 0.5rem;
+    font-weight: 500;
+  }
+
+  .btn-outline-primary:hover {
+    background-color: #5624d01a;
+    color: #4c1fb3;
+    border-color: #4c1fb3;
+  }
+  
+  .form-control {
+    border-radius: 0.5rem;
+    padding: 0.6rem 1rem;
+    border: 1px solid #dee2e6;
+  }
+  
+  .form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(86, 36, 208, 0.15);
+    border-color: #5624d0;
+  }
+  
+  /* Star rating improvements */
+  .star-rating .fa-star {
+    cursor: pointer;
+    color: #e0e0e0;
+    transition: color 0.2s ease;
+    margin-right: 2px;
+  }
+  
+  .star-rating .fa-star.text-warning {
+    color: #f5c518 !important;
+  }
+  
+  .star-rating .fa-star:hover {
+    transform: scale(1.1);
+  }
+  
+  /* Timestamp badge */
+  .badge.bg-light.text-primary {
+    background-color: #eeeaf9 !important;
+    font-weight: normal;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  /* Fix sidebar toggle button to look more modern */
+  #desktopSidebarToggle {
+    background-color: white;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    border: none;
+  }
+  
+  /* For smaller screens */
+  @media (max-width: 768px) {
+    .stats-container {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .stats-container div {
+      margin-bottom: 0.5rem;
+    }
   }
 </style>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
